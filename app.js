@@ -1,4 +1,6 @@
 var http = require('http');
-http.createServer(function(req, res) {
+function getReqRes(req, res) {
   console.log(req, res);
-}).listen(20007);
+  res.end('load');
+}
+http.createServer(getReqRes()).listen(20007);
