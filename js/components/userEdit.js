@@ -47,6 +47,5 @@
       me._storage.updateUser(data);
     });
   };
-
   window.UserEdit = UserEdit;
 })();
