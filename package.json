@@ -10,10 +10,13 @@
     "type": "git",
     "url": "https://github.com/kaflan/work4.git"
   },
-  "author": "",
+  "author": "kaflan",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/kaflan/work4/issues"
   },
-  "homepage": "https://github.com/kaflan/work4"
+  "homepage": "https://github.com/kaflan/work4",
+  "dependencies": {
+    "lodash": "^3.10.0"
+  }
 }
