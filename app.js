@@ -1,26 +1,51 @@
 var http = require('http');
 var url = require('url');
 var _ = require('lodash');
-var users = [{id: '1', name: 'Illya Klymov', phone: '+380504020799', role: 'Administrator'},
-  {id: '2', name: 'Ivanov Ivan', phone: '+380670000002', role: 'Student', strikes: 1},
-  {id: '3', name: 'Petrov Petr', phone: '+380670000001', role: 'Support', location: 'Kiev'}];
+var users = {
+  '1': {id: '1', name: 'Illya Klymov', phone: '+380504020799', role: 'Administrator'},
+  '2': {id: '2', name: 'Ivanov Ivan', phone: '+380670000002', role: 'Student', strikes: 1},
+  '3': {id: '3', name: 'Petrov Petr', phone: '+380670000001', role: 'Support', location: 'Kiev'},
+  'max' : 5
+};
+var defaultContentType = 'application/json';
 var server = http.createServer(function getReqRes(req, res) {
   var parsedUrl = url.parse(req.url, true);
   var roles = ['Administrator', 'Student', 'Support', 'Admin'];
-  var id = Math.max(users.id) + 1;
-  var searhRegExpId = /$(?:\d)/;
-  var user;
+  var hash = Object.getOwnPropertyNames(users);
+  var newHash = hash.map(function (item){
+    return +item;
+  });
+  console.log('hash', newHash);
+  var result = [];
+  var id = users.max;
+  var maximum = Math.max(id + 1);
+  var minimum = Math.max(id - 1);
+  console.log('id ',id);
+  var max = _.assign(users, {'max': id}, {'max': maximum});
+  var min = _.assign(users, {'max': id}, {'max': minimum});
+  var searhRegExpId = /\/(\d+)$/;
   var content = null;
+  for (var user in users) {
+    result.push(user);
+  }
+  console.log('result ',result);
   var adminController = {
-    GET: function (req) {
-      return {};
+    GET: function () {
+      return result;
     }
   };
   var userController = {
-    GET: function (req) {
-
+    GET: function () {
+      return JSON.stringify(result);
     },
-    POST: function (req) {
+    POST: function () {
+      return JSON.stringify(result);
+    },
+    DELETE: function(){
+      return JSON.stringify(result);
+    },
+    PUT: function() {
+      return JSON.stringify(result);
     }
   };
   var processRequest = function (controller) {
@@ -28,18 +53,28 @@ var server = http.createServer(function getReqRes(req, res) {
       content = controller[req.method]()
     }
   };
-
-  var isRequestValid = function() {
-     return req.headers['content-type'].indexOf('application/json') >= 0;
+  var isRequestValid = function () {
+    if (!req.headers['content-type']) {
+      console.log('no content type not');
+      return false;
+    }
+    return req.headers['content-type'].indexOf(defaultContentType) >= 0;
   };
 
+  // обработка
+  if (req.method === 'OPTIONS') {
+    console.log('options work');
+    return renderResponse(res, 204, '');
+  }
+
   if (!isRequestValid()) {
+    console.log('req no valid!');
     return renderResponse(res, 401, '');
   }
 
 
   switch (parsedUrl.pathname) {
-    case '/api/user' :
+    case '/api/users' :
       processRequest(userController);
       break;
     case '/refreshAdmins':
@@ -47,20 +82,21 @@ var server = http.createServer(function getReqRes(req, res) {
       break;
   }
   function renderResponse(res, code, body) {
-    res.writeHead(code, {'Content-Type': 'application/json'});
+    res.writeHead(code, {
+      'Accept':'*/*',
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
     res.end(body);
   }
+
   if (content) {
-    renderResponse(res,200, content);
+    renderResponse(res, 200, content);
     return;
   }
-  renderResponse(res, 404, 'BAD request');
-
-
-  console.log(parsedUrl);
-  res.writeHead(200, {'Content-Type': 'application/json'});
-  console.log('write head');
-  res.write('Server work!!! ');
+  renderResponse(res, 404, '');
 });
 
 
