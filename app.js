@@ -25,10 +25,15 @@ var server = http.createServer(function getReqRes(req, res) {
   var min = _.assign(users, {'max': id}, {'max': minimum});
   var searhRegExpId = /\/(\d+)$/;
   var content = null;
-  for (var user in users) {
-    result.push(user);
-  }
+  var userValue = _.values(users);
+  var index =  _.findIndex(userValue, function (chr) {
+      return _.isNumber(chr);
+  });
+  var del = _.remove(userValue, function(){
+    return index;
+  });
   console.log('result ',result);
+  console.log('index', userValue);
   var adminController = {
     GET: function () {
       return result;
