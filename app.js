@@ -38,32 +38,37 @@ var server = http.createServer(function getReqRes(req, res) {
     GET: function () {
       return JSON.stringify(userValue);
     },
-    POST: function () {
-      req.on('data', function (data) {
-        newUser += data.toString();
-      });
-      req.on('end', function(){
-        newUser = JSON.parse(newUser);
+    POST: function (requestData) {
+        newUser = JSON.parse(requestData);
         var id = list.max;
-        var newId = (id + 1);
-        list.max = newId;
+        list.max = id + 1;
         newUser.id = id;
-        console.log('new user in data', newUser);
-        return JSON.stringify(id);
-      });
+        renderResponse(res, 200, JSON.stringify(newUser));
     },
     DELETE: function () {
-      return renderResponse(res, 200, '');
+       renderResponse(res, 200, '');
     },
     PUT: function () {
+      // вообще не заходит сюда???
       console.log('put work', newUser);
       renderResponse(res, 200, newUser);
     }
   };
   var processRequest = function (controller) {
-    if (controller[req.method]) {
-      content = controller[req.method]()
-    }
+   	console.log("REQ METHOD",req.method);
+    console.log("REQ HEADERS", req.headers); 
+    if (!controller[req.method]) return;
+     
+      var requestData = '';
+      req.on('data', function (data) {
+        requestData += data.toString();
+        // не слишком ли много
+      });
+     
+      req.on('end', function(){ 
+        controller[req.method](requestData);
+      });
+     
   };
   var isRequestValid = function () {
     if (!req.headers['content-type']) {
@@ -103,7 +108,7 @@ var server = http.createServer(function getReqRes(req, res) {
     res.end(body);
   }
 
-  if (typeof content === typeof '') {
+  if (typeof content === typeof '') { // и это не нужно тоже - все респонсы отдаются в контроллерах
     console.log('content', content);
     renderResponse(res, 200, content);
     return;
