@@ -1,18 +1,20 @@
 var http = require('http');
 var url = require('url');
 var _ = require('lodash');
+var port = 20007;
+var newUser = '';
 var list = {
   '1': {id: '1', name: 'Illya Klymov', phone: '+380504020799', role: 'Administrator'},
   '2': {id: '2', name: 'Ivanov Ivan', phone: '+380670000002', role: 'Student', strikes: 1},
   '3': {id: '3', name: 'Petrov Petr', phone: '+380670000001', role: 'Support', location: 'Kiev'},
-  'max' : 4
+  'max': 4
 };
 var defaultContentType = 'application/json';
 var server = http.createServer(function getReqRes(req, res) {
   var parsedUrl = url.parse(req.url, true);
   var roles = ['Administrator', 'Student', 'Support', 'Admin'];
   var hash = Object.getOwnPropertyNames(list);
-  var newHash = hash.map(function (item){
+  var newHash = hash.map(function (item) {
     return +item;
   });
   // console.log('hash', newHash);
@@ -22,12 +24,14 @@ var server = http.createServer(function getReqRes(req, res) {
   var searhRegExpId = /\/(\d+)$/;
   var content = null;
   var userValue = _.values(list);
-  var del = _.remove(userValue, function(n){
+  var del = _.remove(userValue, function (n) {
     return _.isNumber(n);
   });
   var adminController = {
     GET: function () {
       return JSON.stringify(userValue);
+    },
+    PUT: function () {
     }
   };
   var userController = {
@@ -35,24 +39,25 @@ var server = http.createServer(function getReqRes(req, res) {
       return JSON.stringify(userValue);
     },
     POST: function () {
-    	req.on('data', function(data) {
-  		var newUser = JSON.parse(data);
-  		var id = list.max;
-  		var users = list;
-  		var newId = (id + 1);
-  		newUser.id = id.toString();
-  		users[id] = newUser;
-  		users.max = newId;
-  		list = users;
-  		console.log('list ', newUser);
-  		return JSON.stringify(newUser);
-  	});
+      req.on('data', function (data) {
+        newUser += data.toString();
+      });
+      req.on('end', function(){
+        newUser = JSON.parse(newUser);
+        var id = list.max;
+        var newId = (id + 1);
+        list.max = newId;
+        newUser.id = id;
+        console.log('new user in data', newUser);
+        return JSON.stringify(id);
+      });
     },
-    DELETE: function(){
-      return JSON.stringify();
+    DELETE: function () {
+      return renderResponse(res, 200, '');
     },
-    PUT: function() {
-      return JSON.stringify();
+    PUT: function () {
+      console.log('put work', newUser);
+      renderResponse(res, 200, newUser);
     }
   };
   var processRequest = function (controller) {
@@ -89,7 +94,7 @@ var server = http.createServer(function getReqRes(req, res) {
   }
   function renderResponse(res, code, body) {
     res.writeHead(code, {
-      'Accept':'*/*',
+      'Accept': '*/*',
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Connection': 'keep-alive',
@@ -99,6 +104,7 @@ var server = http.createServer(function getReqRes(req, res) {
   }
 
   if (typeof content === typeof '') {
+    console.log('content', content);
     renderResponse(res, 200, content);
     return;
   }
@@ -106,10 +112,10 @@ var server = http.createServer(function getReqRes(req, res) {
 });
 
 
-console.log("Server has started.");
+console.log("Server has started.", port);
 if (module.parent) {
   module.exports = server
 } else {
-  server.listen(20007);
+  server.listen(port);
 }
 // request.headers.content-typerequest.headers.hasOwnProperty('Content-Type')
