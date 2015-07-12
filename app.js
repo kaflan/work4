@@ -12,15 +12,11 @@ var list = {
 var defaultContentType = 'application/json';
 var server = http.createServer(function getReqRes(req, res) {
   var parsedUrl = url.parse(req.url, true);
-  var roles = ['Administrator', 'Student', 'Support', 'Admin'];
-  var hash = Object.getOwnPropertyNames(list);
-  var newHash = hash.map(function (item) {
-    return +item;
-  });
-  // console.log('hash', newHash);
-  // var result = [];
-  // var max = _.assign(list, {'max': id}, {'max': maximum});
-  // var min = _.assign(list, {'max': id}, {'max': minimum});
+  //var roles = ['Administrator', 'Student', 'Support', 'Admin'];
+  //var hash = Object.getOwnPropertyNames(list);
+  //var newHash = hash.map(function (item) {
+    //return +item;
+  //});
   var searhRegExpId = /\/(\d+)$/;
   var content = null;
   var userValue = _.values(list);
@@ -29,46 +25,73 @@ var server = http.createServer(function getReqRes(req, res) {
   });
   var adminController = {
     GET: function () {
-      return JSON.stringify(userValue);
+      renderResponse(res, 200, '');
     },
     PUT: function () {
+      if(!newUser.id || newUser.id === undefined){
+        renderResponse(res, 404, '');
+      }
+      renderResponse(res, 200, newUser);
+    },
+    DELETE: function () {
+      if(!newUser.id || newUser.id === undefined){
+        renderResponse(res, 404, '');
+      }
+      renderResponse(res, 200, '');
     }
   };
   var userController = {
     GET: function () {
-      return JSON.stringify(userValue);
+      renderResponse(res, 200, JSON.stringify(userValue));
     },
     POST: function (requestData) {
-        newUser = JSON.parse(requestData);
-        var id = list.max;
-        list.max = id + 1;
-        newUser.id = id;
-        renderResponse(res, 200, JSON.stringify(newUser));
+      newUser = JSON.parse(requestData);
+      var id = list.max;
+      list.max = id + 1;
+      newUser.id = id;
+      console.log('role', newUser.role);
+      if(!newUser.role || newUser.role === undefined){
+        newUser.role = 'Student';
+      }
+      list[newUser.id] = newUser;
+      console.log('new user in list', list);
+      renderResponse(res, 200, JSON.stringify(newUser));
     },
     DELETE: function () {
-       renderResponse(res, 200, '');
+      var data = parsedUrl.pathname.match(searhRegExpId);
+      data = data[1];
+      list.max = list.max - 1;
+      delete list[data];
+      console.log ('delete, ', data, 'list', list, list.max);
+      renderResponse(res, 200, '');
     },
-    PUT: function () {
+    PUT: function (reqestData) {
+      newUser = JSON.parse(reqestData);
       // вообще не заходит сюда???
-      console.log('put work', newUser);
-      renderResponse(res, 200, newUser);
+      list[newUser.id] = newUser;
+      if (!newUser.id || newUser.id === undefined){
+        renderResponse(res, 404, '');
+      }
+      console.log('put work list chenche', list);
+      renderResponse(res, 200, JSON.stringify(newUser));
     }
   };
+  //else if (!user.role || user.role === undefined) {
+  //  response.writeHead(404, headers);
+  //  response.end();
+  //}
   var processRequest = function (controller) {
-   	console.log("REQ METHOD",req.method);
-    console.log("REQ HEADERS", req.headers); 
     if (!controller[req.method]) return;
-     
-      var requestData = '';
-      req.on('data', function (data) {
-        requestData += data.toString();
-        // не слишком ли много
-      });
-     
-      req.on('end', function(){ 
-        controller[req.method](requestData);
-      });
-     
+
+    var requestData = '';
+    req.on('data', function (data) {
+      requestData += data.toString();
+      // не слишком ли много
+    });
+    req.on('end', function () {
+      controller[req.method](requestData);
+    });
+
   };
   var isRequestValid = function () {
     if (!req.headers['content-type']) {
@@ -89,13 +112,14 @@ var server = http.createServer(function getReqRes(req, res) {
     return renderResponse(res, 401, '');
   }
 
-  switch (parsedUrl.pathname) {
-    case '/api/users' :
-      processRequest(userController);
-      break;
-    case '/refreshAdmins':
-      processRequest(adminController);
-      break;
+  console.log("REQ METHOD", req.method);
+  console.log("REQ HEADERS", req.headers);
+
+  if (parsedUrl.pathname.indexOf('/api/users') === 0) {
+    return processRequest(userController);
+  }
+  if (parsedUrl.pathname == '/refreshAdmins') {
+    return processRequest(adminController);
   }
   function renderResponse(res, code, body) {
     res.writeHead(code, {
@@ -103,16 +127,12 @@ var server = http.createServer(function getReqRes(req, res) {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Connection': 'keep-alive',
-      'Access-Control-Allow-Headers': 'Content-Type'
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'HEAD, GET, POST, PUT, DELETE, OPTIONS'
     });
     res.end(body);
   }
 
-  if (typeof content === typeof '') { // и это не нужно тоже - все респонсы отдаются в контроллерах
-    console.log('content', content);
-    renderResponse(res, 200, content);
-    return;
-  }
   renderResponse(res, 404, '');
 });
 
