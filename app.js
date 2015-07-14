@@ -12,11 +12,6 @@ var list = {
 var defaultContentType = 'application/json';
 var server = http.createServer(function getReqRes(req, res) {
   var parsedUrl = url.parse(req.url, true);
-  //var roles = ['Administrator', 'Student', 'Support', 'Admin'];
-  //var hash = Object.getOwnPropertyNames(list);
-  //var newHash = hash.map(function (item) {
-    //return +item;
-  //});
   var searhRegExpId = /\/(\d+)$/;
   var content = null;
   var userValue = _.values(list);
@@ -62,7 +57,7 @@ var server = http.createServer(function getReqRes(req, res) {
       data = data[1];
       list.max = list.max - 1;
       delete list[data];
-      console.log ('delete, ', data, 'list', list, list.max);
+      console.log ('delete, ', 'list max', list.max);
       renderResponse(res, 200, '');
     },
     PUT: function (reqestData) {
@@ -72,7 +67,7 @@ var server = http.createServer(function getReqRes(req, res) {
       if (!newUser.id || newUser.id === undefined){
         renderResponse(res, 404, '');
       }
-      console.log('put work list chenche', list);
+      console.log('put work list chenche', list);																					
       renderResponse(res, 200, JSON.stringify(newUser));
     }
   };
